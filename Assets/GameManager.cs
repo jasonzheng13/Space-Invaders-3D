@@ -28,6 +28,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private int lives;
 
     private static GameManager instance;
+    private int introFinishedFrame = -1;   // Enter on this frame skipped the intro; don't also start the round
 
     /// <summary>True while gameplay should run. Also true if no GameManager exists, so the game still works without one.</summary>
     public static bool IsPlaying => instance == null || instance.state == State.Playing;
@@ -38,8 +39,14 @@ public class GameManager : MonoBehaviour
         state = State.Ready;
         lives = startingLives;
         UpdateLivesText();
-        SetActiveSafe(startPanel, true);
         SetActiveSafe(endPanel, false);
+
+        // First run: play the cutscene, with the HUD hidden, before showing the start screen.
+        bool intro = !IntroSequence.HasPlayed;
+        SetActiveSafe(startPanel, !intro);
+        SetCanvasVisible(!intro);
+        if (intro) gameObject.AddComponent<IntroSequence>();
+
         SetStartText("<color=#F4A340>GUNDAM INVADERS</color>\nPress ENTER to launch");
     }
 
@@ -51,6 +58,21 @@ public class GameManager : MonoBehaviour
         if (label != null) label.text = richText;
     }
 
+    /// <summary>Called by IntroSequence when it ends or is skipped.</summary>
+    public static void OnIntroFinished()
+    {
+        if (instance == null) return;
+        instance.introFinishedFrame = Time.frameCount;
+        instance.SetCanvasVisible(true);
+        SetActiveSafe(instance.startPanel, true);
+    }
+
+    private void SetCanvasVisible(bool visible)
+    {
+        Canvas canvas = startPanel != null ? startPanel.GetComponentInParent<Canvas>(true) : null;
+        if (canvas != null) canvas.enabled = visible;
+    }
+
     void OnDestroy()
     {
         if (instance == this) instance = null;
@@ -60,6 +82,7 @@ public class GameManager : MonoBehaviour
     {
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null) return;
+        if (IntroSequence.IsPlaying || Time.frameCount == introFinishedFrame) return;
 
         // Enter starts; R restarts. Space is deliberately not used because it also fires a dart.
         if (state == State.Ready && keyboard.enterKey.wasPressedThisFrame)
