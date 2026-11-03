@@ -15,6 +15,7 @@ public sealed class SkinDef
     public float BobAmplitude;        // world units
     public float BobPeriod = 2.4f;    // seconds for one full hover cycle
     public Vector2Int Muzzle = new Vector2Int(-1, -1);   // top-left of the 3x3 muzzle flash; x < 0 = none
+    public bool FitCollider;          // resize a SphereCollider to match the sprite (mobile suits only)
 }
 
 /// <summary>
@@ -115,6 +116,14 @@ public class PixelSkin : MonoBehaviour
         }
 
         allRenderers = skin.GetComponentsInChildren<SpriteRenderer>(true);
+
+        // The old sphere was smaller than the new sprite, so shots that visibly hit a
+        // mech's shoulder would pass through. Match the hitbox to what the player sees.
+        if (def.FitCollider && TryGetComponent(out SphereCollider sphere))
+        {
+            float worldRadius = 0.4f * Mathf.Min(BodySizeWorld.x, BodySizeWorld.y);
+            sphere.radius = worldRadius / Mathf.Max(s.x, s.y);
+        }
     }
 
     /// <summary>Sprite pixel coordinates (from top-left) to a position relative to the sprite centre.</summary>

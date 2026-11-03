@@ -238,6 +238,28 @@ public static class SpriteLibrary
             BobPeriod = 2.4f,
             Muzzle = new Vector2Int(24, 0)    // just above the rifle barrel
         };
+
+        static readonly Color32 MonoEye = PixelArt.Hex("#FF6FAE");
+
+        // Eye sweep distance = visor width minus eye width, so the eye stays on the visor.
+        public static readonly SkinDef Zaku = new SkinDef
+        {
+            Body = SpriteLibrary.Zaku,
+            Eye = new RectInt(7, 3, 2, 1), EyeSweepPx = 4, EyeColor = MonoEye,
+            Flames = new[] { new RectInt(6, 19, 2, 3), new RectInt(12, 19, 2, 3) },
+            BobAmplitude = 0.06f, BobPeriod = 2.4f, FitCollider = true
+        };
+
+        public static readonly SkinDef RickDom = new SkinDef
+        {
+            Body = SpriteLibrary.RickDom,
+            Eye = new RectInt(6, 2, 2, 1), EyeSweepPx = 6, EyeColor = MonoEye,
+            Flames = new[] { new RectInt(3, 15, 3, 3), new RectInt(14, 15, 3, 3) },   // skirt thrusters
+            BobAmplitude = 0.06f, BobPeriod = 2.4f, FitCollider = true
+        };
+
+        public static readonly SkinDef BeamShot = new SkinDef { Body = SpriteLibrary.BeamShot };
+        public static readonly SkinDef ZakuTracer = new SkinDef { Body = SpriteLibrary.ZakuTracer };
     }
 
     public static IEnumerable<SpriteDef> All

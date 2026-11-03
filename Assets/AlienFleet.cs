@@ -38,7 +38,10 @@ public class AlienFleet : MonoBehaviour
                     gridOrigin.y - spacing * row,
                     0);
                 aliens.Add(alien);
-                alien.GetComponent<Alien>().fleet = this;
+                Alien a = alien.GetComponent<Alien>();
+                a.fleet = this;
+                // Heavy Rick Doms hold the top row; Zakus fill the rows below.
+                a.Skin(row == 0 ? SpriteLibrary.Skins.RickDom : SpriteLibrary.Skins.Zaku);
             }
         }
         startingCount = aliens.Count;
@@ -90,6 +93,14 @@ public class AlienFleet : MonoBehaviour
     {
         movingDown = false;
     }
+
+    /// <summary>Current speed relative to a full fleet: 1 at the start, higher as aliens die.</summary>
+    public float SpeedRatio => Mathf.Abs(speed) / baseSpeed;
+
+    /// <summary>The fleet's movement in units per second (debris from kills drifts with it).</summary>
+    public Vector3 Velocity => movingDown
+        ? new Vector3(0f, -Mathf.Abs(speed) / Time.fixedDeltaTime, 0f)
+        : new Vector3(speed / Time.fixedDeltaTime, 0f, 0f);
 
     /// <summary>
     /// How much more often each surviving alien fires compared with a full fleet.

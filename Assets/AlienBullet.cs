@@ -5,6 +5,11 @@ public class AlienBullet : MonoBehaviour
     static float speed = .15f;       // units per physics tick (was .1)
     static float despawnY = -10f;    // just below the bottom of the orthographic camera
 
+    void Start()
+    {
+        PixelSkin.Apply(gameObject, SpriteLibrary.Skins.ZakuTracer);   // yellow machine-gun tracer
+    }
+
     void FixedUpdate()
     {
         Vector3 position = transform.position;

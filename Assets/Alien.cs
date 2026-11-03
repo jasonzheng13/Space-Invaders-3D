@@ -11,9 +11,19 @@ public class Alien : MonoBehaviour
 
     [Header("Dynamic")]
     [SerializeField] private float lastShot = 0;
+    private PixelSkin skin;
+
+    /// <summary>Called by AlienFleet right after spawning: which Zeon suit this alien is drawn as.</summary>
+    public void Skin(SkinDef def)
+    {
+        skin = PixelSkin.Apply(gameObject, def);
+    }
 
     void FixedUpdate()
     {
+        // Mono-eyes scan faster as the fleet speeds up, so the tension shows on screen.
+        if (skin != null && fleet != null) skin.EyeSpeed = fleet.SpeedRatio;
+
         if (!GameManager.IsPlaying) return;   // no shooting after the round ends
 
         // Survivors fire more often as the fleet shrinks (see AlienFleet.FireRateMultiplier).
