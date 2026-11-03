@@ -38,6 +38,10 @@ public class Alien : MonoBehaviour
 
     void OnCollisionEnter(Collision coll)
     {
+        // Burst into pixels that keep drifting with the fleet, and freeze for a beat so the kill lands.
+        Explosion.Spawn(transform.position, fleet != null ? fleet.Velocity : Vector3.zero);
+        GameFeel.HitStop(0.05f);
+
         // Let the fleet own its list; it also updates the on-screen counter.
         if (fleet != null)
         {

@@ -19,10 +19,13 @@ public class Spaceship : MonoBehaviour
     private Camera cam;
     private float halfWidth;   // half the ship's visual width, measured from its sprite
     private PixelSkin skin;
+    private float clampCentre;   // camera x at rest
 
     void Start()
     {
         cam = Camera.main;
+        // Remember where the camera rests: screen shake moves it, and the clamp must not follow.
+        clampCentre = cam != null ? cam.transform.position.x : 0f;
 
         // Draw the ship as the pixel-art Gundam. The clamp uses the sprite's width,
         // because the original cylinders are now hidden.
@@ -49,8 +52,7 @@ public class Spaceship : MonoBehaviour
             Vector3 position = transform.position;
             position.x += direction * speed * Time.deltaTime;
             float limit = HorizontalLimit();
-            float centre = cam != null ? cam.transform.position.x : 0f;
-            position.x = Mathf.Clamp(position.x, centre - limit, centre + limit);
+            position.x = Mathf.Clamp(position.x, clampCentre - limit, clampCentre + limit);
             transform.position = position;
         }
 
@@ -73,6 +75,11 @@ public class Spaceship : MonoBehaviour
         if (Time.time - lastHit < invulnerableSeconds) return;   // within the grace period after the last hit
         lastHit = Time.time;
         GameManager.ReportShipHit();
+
+        // Flash white, shake the screen, then blink through the grace period.
+        skin.Flash(0.1f);
+        skin.Blink(invulnerableSeconds);
+        GameFeel.Shake(0.12f, 0.08f);
     }
 
     /// <summary>

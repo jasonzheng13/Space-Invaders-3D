@@ -29,6 +29,8 @@ public class AlienBullet : MonoBehaviour
         // (see Spaceship.OnCollisionEnter) so lives can be deducted instead.
         if (!coll.gameObject.TryGetComponent<Spaceship>(out _))
         {
+            // A dart shot this bullet down: small pop, no freeze (that is saved for kills).
+            if (coll.gameObject.TryGetComponent<Dart>(out _)) Explosion.Spawn(transform.position, Vector3.zero);
             Destroy(coll.gameObject);
         }
     }
