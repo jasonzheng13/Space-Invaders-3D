@@ -15,6 +15,14 @@ public class Alien : MonoBehaviour
     private PixelSkin skin;
 
     /// <summary>Called by AlienFleet right after spawning: which Zeon suit this alien is drawn as.</summary>
+    void Awake()
+    {
+        // The fleet moves aliens by setting their position. Freezing the body stops the physics
+        // solver from pushing an alien out of formation when it overlaps a cover cell; collisions
+        // are still reported because the body stays dynamic.
+        if (TryGetComponent(out Rigidbody rb)) rb.constraints = RigidbodyConstraints.FreezeAll;
+    }
+
     public void Skin(SkinDef def)
     {
         skin = PixelSkin.Apply(gameObject, def);
@@ -43,13 +51,6 @@ public class Alien : MonoBehaviour
         if (coll.gameObject.TryGetComponent<CoverCell>(out _))
         {
             Destroy(coll.gameObject);
-            // The fleet moves aliens by position, so cancel any push the physics contact gave this body.
-            if (TryGetComponent(out Rigidbody rb))
-            {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-            }
-            transform.rotation = Quaternion.identity;
             return;
         }
 

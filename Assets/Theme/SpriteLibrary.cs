@@ -49,7 +49,7 @@ public static class SpriteLibrary
     public static readonly SpriteDef GundamBack = new SpriteDef
     {
         Id = "GundamBack",
-        PixelsPerUnit = 14,
+        PixelsPerUnit = 10,   // 2.8 units wide: matches the ship prefab's ~2.7-unit hitbox
         Palette = GundamPalette,
         Rows = PixelArt.Patch(PixelArt.Patch(Join(new[]
         {
@@ -78,7 +78,7 @@ public static class SpriteLibrary
     public static readonly SpriteDef GundamFront = new SpriteDef
     {
         Id = "GundamFront",
-        PixelsPerUnit = 14,
+        PixelsPerUnit = 10,
         Palette = GundamPalette,
         Rows = PixelArt.Patch(PixelArt.Patch(Join(new[]
         {

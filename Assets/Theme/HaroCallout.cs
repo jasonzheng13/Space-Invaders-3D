@@ -10,7 +10,8 @@ public class HaroCallout : MonoBehaviour
 {
     const float ShowSeconds = 2f;
     const float BounceInterval = 0.15f;
-    const int Order = 90;                 // above gameplay sprites, below the intro
+    // Below gameplay sprites (so incoming tracers are never hidden) but above the backdrop (-41 and lower).
+    const int Order = -10;
     static readonly Vector2 BubbleSize = new Vector2(7.4f, 1f);
 
     private static HaroCallout instance;

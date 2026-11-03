@@ -56,6 +56,7 @@ public class PixelSkin : MonoBehaviour
     private GameObject muzzle;
     private SpriteRenderer[] allRenderers;
 
+    private float eyePhase;   // accumulated, so a change in EyeSpeed doesn't make the eye jump
     private float bobPhase, targetLean, fireTime = -999f, flashUntil = -1f, blinkUntil = -1f;
     private bool blinking;
 
@@ -174,7 +175,8 @@ public class PixelSkin : MonoBehaviour
         // Mono-eye sweeps right and back, easing at each end.
         if (eye != null)
         {
-            float pass = Mathf.PingPong(t * EyeSpeed / EyePassSeconds, 1f);
+            eyePhase += Time.deltaTime * EyeSpeed / EyePassSeconds;
+            float pass = Mathf.PingPong(eyePhase, 1f);
             float travel = def.EyeSweepPx / def.Body.PixelsPerUnit;
             eye.localPosition = eyeStart + new Vector3(Mathf.SmoothStep(0f, 1f, pass) * travel, 0f, 0f);
         }

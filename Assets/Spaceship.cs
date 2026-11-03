@@ -31,6 +31,7 @@ public class Spaceship : MonoBehaviour
         // because the original cylinders are now hidden.
         skin = PixelSkin.Apply(gameObject, SpriteLibrary.Skins.Gundam);
         halfWidth = skin.BodySizeWorld.x / 2f;
+        CentreHitbox();
 
         // Four destructible Federation cover blocks between the ship and the fleet.
         CoverBlocks.Build(-3.5f, new[] { -12f, -4f, 4f, 12f });
@@ -83,6 +84,24 @@ public class Spaceship : MonoBehaviour
         skin.Flash(0.1f);
         skin.Blink(invulnerableSeconds);
         GameFeel.Shake(0.12f, 0.08f);
+    }
+
+    /// <summary>
+    /// The prefab's three capsule colliders (one per old cylinder) are centred about 0.3 units
+    /// left of the ship's origin, but the sprite is drawn centred on the origin. Shift the
+    /// (now invisible) collider children so the hitbox sits under the Gundam you can see.
+    /// </summary>
+    private void CentreHitbox()
+    {
+        Collider[] colliders = GetComponentsInChildren<Collider>();
+        if (colliders.Length == 0) return;
+        Bounds b = colliders[0].bounds;
+        foreach (Collider c in colliders) b.Encapsulate(c.bounds);
+        float shift = transform.position.x - b.center.x;
+        foreach (Collider c in colliders)
+        {
+            if (c.transform != transform) c.transform.position += new Vector3(shift, 0f, 0f);
+        }
     }
 
     /// <summary>
