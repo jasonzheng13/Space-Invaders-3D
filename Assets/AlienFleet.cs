@@ -1,49 +1,47 @@
 using UnityEngine;
 using System.Collections.Generic;
-using UnityEngine.InputSystem;
 
 public class AlienFleet : MonoBehaviour
 {
     [Header("Inscribed")]
-
     public GameObject alienPrefab;
-
     public AlienCounter alienCounter;
 
-    public List<GameObject> aliens = new List<GameObject> { };
+    [SerializeField] private int columns = 10;
+    [SerializeField] private int rows = 3;
+    [SerializeField] private float spacing = 2f;
+    [SerializeField] private Vector2 gridOrigin = new Vector2(-12f, 10f); // top-left alien
+    [SerializeField] private float speed = .1f;        // units per physics tick; sign = direction
+    [SerializeField] private float leftBound = -16f;
+    [SerializeField] private float rightBound = 16f;
+    [SerializeField] private float downTime = .1f;     // seconds spent moving down at each turn
 
-    float speed = .1f;
-    float leftBound = -16;
-    float rightBound = 16;
-    float lowerBound = 4.8f;
-    float downTime = .1f;
-    bool movingDown = false;
+    [Header("Dynamic")]
+    public List<GameObject> aliens = new List<GameObject>();
+    private bool movingDown = false;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        for (int i = 0; i < 10; i++)
+        for (int col = 0; col < columns; col++)
         {
-            for (int j = 0; j < 3; j++)
+            for (int row = 0; row < rows; row++)
             {
                 GameObject alien = Instantiate<GameObject>(alienPrefab);
-                alien.transform.position = new Vector3(2 * i - 12, 10 - 2 * j, 0);
+                alien.transform.position = new Vector3(
+                    gridOrigin.x + spacing * col,
+                    gridOrigin.y - spacing * row,
+                    0);
                 aliens.Add(alien);
                 alien.GetComponent<Alien>().fleet = this;
             }
         }
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        alienCounter.score = aliens.Count;
+        alienCounter.SetCount(aliens.Count);
     }
 
     void FixedUpdate()
     {
-        //move all aliens
+        // Move every alien and track the fleet's horizontal extent in the same pass.
+        float left = float.MaxValue, right = float.MinValue;
         foreach (GameObject alien in aliens)
         {
             Vector3 position = alien.transform.position;
@@ -53,40 +51,32 @@ public class AlienFleet : MonoBehaviour
             }
             else
             {
-                position.y += -Mathf.Abs(speed);
-                /*if (position.y <= lowerBound)
-                {
-                    movingDown = false;
-                    lowerBound = position.y - 1;
-                }*/
+                position.y -= Mathf.Abs(speed);
             }
             alien.transform.position = position;
+
+            left = Mathf.Min(left, position.x);
+            right = Mathf.Max(right, position.x);
         }
 
-        //change alien direction
-        float left = 0, right = 0;
-        foreach (GameObject alien in aliens)
-        {
-            Vector3 position = alien.transform.position;
-            if (position.x > right)
-            {
-                right = position.x;
-            }
-            if (position.x < left)
-            {
-                left = position.x;
-            }
-        }
-        if (speed > 0 && right >= rightBound || speed < 0 && left <= leftBound)
+        // Reverse direction and step down when the outermost alien hits a side bound.
+        if ((speed > 0 && right >= rightBound) || (speed < 0 && left <= leftBound))
         {
             speed = -speed;
             movingDown = true;
-            Invoke("startSidewaysMotion", downTime);
+            Invoke(nameof(StartSidewaysMotion), downTime);
         }
     }
 
-    void startSidewaysMotion()
+    void StartSidewaysMotion()
     {
         movingDown = false;
+    }
+
+    /// <summary>Called by an Alien when it is destroyed. Keeps the list and the UI in sync.</summary>
+    public void RemoveAlien(GameObject alien)
+    {
+        aliens.Remove(alien);
+        alienCounter.SetCount(aliens.Count);
     }
 }

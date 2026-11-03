@@ -2,30 +2,17 @@ using UnityEngine;
 
 public class Dart : MonoBehaviour
 {
-    [Header("Inscribed")]
-    static float speed = .3f;
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    static float speed = .3f;        // units per physics tick
+    static float despawnY = 10f;     // just above the top of the orthographic camera
 
     void FixedUpdate()
     {
         Vector3 position = transform.position;
         position.y += speed;
         transform.position = position;
-        if(position.y > 10)
+        if (position.y > despawnY)
         {
             Destroy(gameObject);
         }
     }
-
 }
