@@ -31,6 +31,9 @@ public class Spaceship : MonoBehaviour
         // because the original cylinders are now hidden.
         skin = PixelSkin.Apply(gameObject, SpriteLibrary.Skins.Gundam);
         halfWidth = skin.BodySizeWorld.x / 2f;
+
+        // Four destructible Federation cover blocks between the ship and the fleet.
+        CoverBlocks.Build(-3.5f, new[] { -12f, -4f, 4f, 12f });
     }
 
     void Update()

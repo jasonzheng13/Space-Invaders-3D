@@ -39,6 +39,20 @@ public class Alien : MonoBehaviour
 
     void OnCollisionEnter(Collision coll)
     {
+        // Descending into cover erases the cell but the alien survives (no kill, no score).
+        if (coll.gameObject.TryGetComponent<CoverCell>(out _))
+        {
+            Destroy(coll.gameObject);
+            // The fleet moves aliens by position, so cancel any push the physics contact gave this body.
+            if (TryGetComponent(out Rigidbody rb))
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+            transform.rotation = Quaternion.identity;
+            return;
+        }
+
         // Only a dart scores; touching the ship does not.
         if (coll.gameObject.TryGetComponent<Dart>(out _)) GameManager.AddScore(points);
 
