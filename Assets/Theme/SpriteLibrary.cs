@@ -258,6 +258,14 @@ public static class SpriteLibrary
             BobAmplitude = 0.06f, BobPeriod = 2.4f, FitCollider = true
         };
 
+        public static readonly SkinDef CharZaku = new SkinDef
+        {
+            Body = SpriteLibrary.CharZaku,
+            Eye = new RectInt(7, 4, 2, 1), EyeSweepPx = 4, EyeColor = MonoEye,
+            Flames = new[] { new RectInt(6, 20, 2, 3), new RectInt(12, 20, 2, 3) },
+            BobAmplitude = 0.04f, BobPeriod = 1.2f, FitCollider = true
+        };
+
         public static readonly SkinDef BeamShot = new SkinDef { Body = SpriteLibrary.BeamShot };
         public static readonly SkinDef ZakuTracer = new SkinDef { Body = SpriteLibrary.ZakuTracer };
     }

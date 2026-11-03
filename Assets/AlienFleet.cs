@@ -19,12 +19,19 @@ public class AlienFleet : MonoBehaviour
     [SerializeField] private float downTime = .1f;     // seconds spent moving down at each turn
     [Tooltip("When the lowest alien's y drops to this value the player can no longer win and the round ends.")]
     [SerializeField] private float gameOverY = -4.5f;
+    [Tooltip("Seconds between Char's Zaku bonus flyovers.")]
+    [SerializeField] private float flyoverInterval = 20f;
+    [Tooltip("Flyovers only start once the top row has dropped below this height, so they have room.")]
+    [SerializeField] private float flyoverClearY = 8.5f;
+    [SerializeField] private float flyoverY = 10.3f;
 
     [Header("Dynamic")]
     public List<GameObject> aliens = new List<GameObject>();
     [SerializeField] private float speed;   // current speed; sign = direction. Grows as aliens die.
     private int startingCount;
     private bool movingDown = false;
+    private float flyoverTimer;
+    private float flyoverDirection = 1f;
 
     void Start()
     {
@@ -42,6 +49,7 @@ public class AlienFleet : MonoBehaviour
                 a.fleet = this;
                 // Heavy Rick Doms hold the top row; Zakus fill the rows below.
                 a.Skin(row == 0 ? SpriteLibrary.Skins.RickDom : SpriteLibrary.Skins.Zaku);
+                a.points = row == 0 ? 30 : 10;
             }
         }
         startingCount = aliens.Count;
@@ -54,7 +62,7 @@ public class AlienFleet : MonoBehaviour
         if (!GameManager.IsPlaying) return;   // freeze the fleet once the round has ended
 
         // Move every alien and track the fleet's extent in the same pass.
-        float left = float.MaxValue, right = float.MinValue, lowest = float.MaxValue;
+        float left = float.MaxValue, right = float.MinValue, lowest = float.MaxValue, highest = float.MinValue;
         foreach (GameObject alien in aliens)
         {
             Vector3 position = alien.transform.position;
@@ -71,6 +79,16 @@ public class AlienFleet : MonoBehaviour
             left = Mathf.Min(left, position.x);
             right = Mathf.Max(right, position.x);
             lowest = Mathf.Min(lowest, position.y);
+            highest = Mathf.Max(highest, position.y);
+        }
+
+        // Char's Zaku makes a bonus pass every flyoverInterval seconds, alternating direction.
+        flyoverTimer += Time.fixedDeltaTime;
+        if (flyoverTimer >= flyoverInterval && highest < flyoverClearY)
+        {
+            flyoverTimer = 0f;
+            CharFlyover.Spawn(flyoverY, flyoverDirection);
+            flyoverDirection = -flyoverDirection;
         }
 
         // The invasion succeeded: aliens reached the player's row.

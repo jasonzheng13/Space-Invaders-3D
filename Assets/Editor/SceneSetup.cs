@@ -84,10 +84,16 @@ public static class SceneSetup
         SetIfEmpty(gameManager, "resultText", resultText);
         SetIfEmpty(gameManager, "livesText", livesText);
 
+        GameObject scoreGO = FindChild(canvasT, "ScoreText");
+        TextMeshProUGUI scoreText = scoreGO != null
+            ? scoreGO.GetComponent<TextMeshProUGUI>()
+            : CreateScoreText(canvasT);
+        SetIfEmpty(gameManager, "scoreText", scoreText);
+
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Selection.activeGameObject = gameManager.gameObject;
-        Debug.Log("Space Invaders scene set up and saved. Check the GameManager Inspector: all four UI slots should be filled.");
+        Debug.Log("Space Invaders scene set up and saved. Check the GameManager Inspector: all five UI slots should be filled.");
     }
 
     // ---------- helpers ----------
@@ -140,6 +146,17 @@ public static class SceneSetup
         rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 1f);
         rt.sizeDelta = new Vector2(300f, 60f);
         rt.anchoredPosition = new Vector2(-20f, -20f);
+        return text;
+    }
+
+    /// <summary>"SCORE 000000" anchored to the bottom-left corner.</summary>
+    static TextMeshProUGUI CreateScoreText(Transform canvas)
+    {
+        TextMeshProUGUI text = CreateText(canvas, "ScoreText", "SCORE 000000", 36, TextAlignmentOptions.BottomLeft, stretch: false);
+        RectTransform rt = text.rectTransform;
+        rt.anchorMin = rt.anchorMax = rt.pivot = Vector2.zero;
+        rt.sizeDelta = new Vector2(400f, 60f);
+        rt.anchoredPosition = new Vector2(20f, 20f);
         return text;
     }
 

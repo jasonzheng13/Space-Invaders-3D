@@ -22,10 +22,13 @@ public class GameManager : MonoBehaviour
     [Tooltip("HUD label showing remaining lives.")]
     [SerializeField] private TextMeshProUGUI livesText;
     [SerializeField] private int startingLives = 3;
+    [Tooltip("HUD label showing the score.")]
+    [SerializeField] private TextMeshProUGUI scoreText;
 
     [Header("Dynamic")]
     [SerializeField] private State state = State.Ready;
     [SerializeField] private int lives;
+    [SerializeField] private int score;
 
     private static GameManager instance;
     private int introFinishedFrame = -1;   // Enter on this frame skipped the intro; don't also start the round
@@ -38,7 +41,9 @@ public class GameManager : MonoBehaviour
         instance = this;
         state = State.Ready;
         lives = startingLives;
+        score = 0;
         UpdateLivesText();
+        UpdateScoreText();
         SetActiveSafe(endPanel, false);
 
         // First run: play the cutscene, with the HUD hidden, before showing the start screen.
@@ -130,6 +135,19 @@ public class GameManager : MonoBehaviour
         {
             instance.EndRound(State.Lost, "MOBILE SUIT LOST\nThe Gundam was destroyed");
         }
+    }
+
+    /// <summary>Adds points for a kill (Zaku 10, Rick Dom 30, Char's Zaku 150).</summary>
+    public static void AddScore(int points)
+    {
+        if (instance == null || instance.state != State.Playing) return;
+        instance.score += points;
+        instance.UpdateScoreText();
+    }
+
+    private void UpdateScoreText()
+    {
+        if (scoreText != null) scoreText.text = "SCORE " + score.ToString("D6");
     }
 
     private void UpdateLivesText()

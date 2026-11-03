@@ -5,6 +5,7 @@ public class Alien : MonoBehaviour
     [Header("Inscribed")]
     public GameObject bulletPrefab;
     public AlienFleet fleet;   // set by AlienFleet when it spawns this alien
+    public int points = 10;    // score for shooting this alien down; set by AlienFleet
 
     static float bulletSpawnRate = .0025f;  // base chance to fire per physics tick (was .002)
     public static float shotCooldown = .1f;
@@ -38,6 +39,9 @@ public class Alien : MonoBehaviour
 
     void OnCollisionEnter(Collision coll)
     {
+        // Only a dart scores; touching the ship does not.
+        if (coll.gameObject.TryGetComponent<Dart>(out _)) GameManager.AddScore(points);
+
         // Burst into pixels that keep drifting with the fleet, and freeze for a beat so the kill lands.
         Explosion.Spawn(transform.position, fleet != null ? fleet.Velocity : Vector3.zero);
         GameFeel.HitStop(0.05f);
