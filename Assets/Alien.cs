@@ -14,6 +14,8 @@ public class Alien : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!GameManager.IsPlaying) return;   // no shooting after the round ends
+
         if (UnityEngine.Random.value < bulletSpawnRate && Time.time - lastShot > shotCooldown)
         {
             GameObject bullet = Instantiate<GameObject>(bulletPrefab);

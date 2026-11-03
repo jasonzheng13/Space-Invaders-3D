@@ -37,6 +37,8 @@ public class Spaceship : MonoBehaviour
 
     void Update()
     {
+        if (!GameManager.IsPlaying) return;   // ignore input after the round ends
+
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null) return;   // no keyboard attached (e.g. some web/mobile setups)
 
@@ -61,6 +63,15 @@ public class Spaceship : MonoBehaviour
             dart.transform.position = transform.position;
             lastShot = Time.time;
         }
+    }
+
+    /// <summary>
+    /// Only alien bullets (and aliens themselves) can collide with the ship, per the physics
+    /// layer matrix. Whatever hit us destroys the ship, so the round is lost.
+    /// </summary>
+    void OnCollisionEnter(Collision coll)
+    {
+        GameManager.ReportLoss("Your ship was destroyed");
     }
 
     /// <summary>
