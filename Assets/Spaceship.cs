@@ -17,25 +17,17 @@ public class Spaceship : MonoBehaviour
     [SerializeField] private float lastHit = -999f;
 
     private Camera cam;
-    private float halfWidth;   // half the ship's visual width, measured from its renderers
+    private float halfWidth;   // half the ship's visual width, measured from its sprite
+    private PixelSkin skin;
 
     void Start()
     {
         cam = Camera.main;
 
-        // Measure the ship from its child renderers so the clamp hugs the visible model,
-        // not the empty root transform. Falls back to 1 unit if there are no renderers.
-        Renderer[] renderers = GetComponentsInChildren<Renderer>();
-        if (renderers.Length > 0)
-        {
-            Bounds bounds = renderers[0].bounds;
-            foreach (Renderer r in renderers) bounds.Encapsulate(r.bounds);
-            halfWidth = bounds.extents.x;
-        }
-        else
-        {
-            halfWidth = 1f;
-        }
+        // Draw the ship as the pixel-art Gundam. The clamp uses the sprite's width,
+        // because the original cylinders are now hidden.
+        skin = PixelSkin.Apply(gameObject, SpriteLibrary.Skins.Gundam);
+        halfWidth = skin.BodySizeWorld.x / 2f;
     }
 
     void Update()
@@ -49,6 +41,8 @@ public class Spaceship : MonoBehaviour
         float direction = 0f;
         if (keyboard.rightArrowKey.isPressed) direction += 1f;
         if (keyboard.leftArrowKey.isPressed) direction -= 1f;
+
+        skin.SetLean(direction);   // lean into the move; 0 levels out again
 
         if (direction != 0f)
         {
@@ -65,6 +59,7 @@ public class Spaceship : MonoBehaviour
             GameObject dart = Instantiate<GameObject>(dartPrefab);
             dart.transform.position = transform.position;
             lastShot = Time.time;
+            skin.Fire();   // muzzle flash and recoil
         }
     }
 

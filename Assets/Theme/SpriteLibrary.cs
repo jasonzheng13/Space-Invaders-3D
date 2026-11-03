@@ -227,6 +227,19 @@ public static class SpriteLibrary
         Boom(6, new[] { "........", "...s....", "........", ".s....s.", "........", "....s...", "........", "........" })
     };
 
+    /// <summary>How each unit animates: thrusters, eyes, hover and muzzle, in sprite pixels.</summary>
+    public static class Skins
+    {
+        public static readonly SkinDef Gundam = new SkinDef
+        {
+            Body = GundamBack,
+            Flames = new[] { new RectInt(9, 26, 3, 4), new RectInt(16, 26, 3, 4) },   // under each foot
+            BobAmplitude = 0.08f,
+            BobPeriod = 2.4f,
+            Muzzle = new Vector2Int(24, 0)    // just above the rifle barrel
+        };
+    }
+
     public static IEnumerable<SpriteDef> All
     {
         get
