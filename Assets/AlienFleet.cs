@@ -76,7 +76,7 @@ public class AlienFleet : MonoBehaviour
         // The invasion succeeded: aliens reached the player's row.
         if (lowest <= gameOverY)
         {
-            GameManager.ReportLoss("The aliens reached you");
+            GameManager.ReportLoss("The Zeon fleet broke through");
             return;
         }
 

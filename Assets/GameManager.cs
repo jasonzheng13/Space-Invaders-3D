@@ -40,6 +40,15 @@ public class GameManager : MonoBehaviour
         UpdateLivesText();
         SetActiveSafe(startPanel, true);
         SetActiveSafe(endPanel, false);
+        SetStartText("<color=#F4A340>GUNDAM INVADERS</color>\nPress ENTER to launch");
+    }
+
+    /// <summary>Replaces the start screen's label (rich text allowed). The label is found under the start panel.</summary>
+    public static void SetStartText(string richText)
+    {
+        if (instance == null || instance.startPanel == null) return;
+        TextMeshProUGUI label = instance.startPanel.GetComponentInChildren<TextMeshProUGUI>(true);
+        if (label != null) label.text = richText;
     }
 
     void OnDestroy()
@@ -79,12 +88,12 @@ public class GameManager : MonoBehaviour
 
     public static void ReportWin()
     {
-        if (instance != null) instance.EndRound(State.Won, "YOU WIN!");
+        if (instance != null) instance.EndRound(State.Won, "MISSION COMPLETE");
     }
 
     public static void ReportLoss(string reason)
     {
-        if (instance != null) instance.EndRound(State.Lost, "GAME OVER\n" + reason);
+        if (instance != null) instance.EndRound(State.Lost, "MOBILE SUIT LOST\n" + reason);
     }
 
     /// <summary>Called by the Spaceship when an alien bullet hits it. Costs one life; the last one ends the round.</summary>
@@ -96,13 +105,18 @@ public class GameManager : MonoBehaviour
         instance.UpdateLivesText();
         if (instance.lives <= 0)
         {
-            instance.EndRound(State.Lost, "Your ship was destroyed");
+            instance.EndRound(State.Lost, "MOBILE SUIT LOST\nThe Gundam was destroyed");
         }
     }
 
     private void UpdateLivesText()
     {
-        if (livesText != null) livesText.text = "Lives: " + lives;
+        // Armor pips: one filled square per remaining life, one hollow square per life lost.
+        if (livesText != null)
+        {
+            int lost = Mathf.Max(0, startingLives - lives);
+            livesText.text = "ARMOR " + new string('\u25A0', Mathf.Max(0, lives)) + new string('\u25A1', lost);
+        }
     }
 
     private void EndRound(State result, string message)

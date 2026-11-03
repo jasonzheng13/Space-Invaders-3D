@@ -14,6 +14,6 @@ public class AlienCounter : MonoBehaviour
     /// <summary>Rebuilds the label. Call only when the count changes, not every frame.</summary>
     public void SetCount(int count)
     {
-        uiText.text = "Remaining Aliens: " + count.ToString("#,0");
+        uiText.text = "ZEON FORCES: " + count.ToString("#,0");
     }
 }
