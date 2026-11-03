@@ -134,6 +134,7 @@ public class AlienFleet : MonoBehaviour
         aliens.Remove(alien);
         alienCounter.SetCount(aliens.Count);
         UpdateSpeed();
+        if (aliens.Count == 5) HaroCallout.Say("HARO! ALMOST CLEAR!");
 
         if (aliens.Count == 0)
         {

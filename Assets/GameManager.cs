@@ -106,6 +106,7 @@ public class GameManager : MonoBehaviour
         if (state != State.Ready) return;
         state = State.Playing;
         SetActiveSafe(startPanel, false);
+        HaroCallout.Say("HARO! ZEON FLEET INBOUND!");
     }
 
     /// <summary>Reloads the scene, which rebuilds the fleet, ship and UI from scratch.</summary>
@@ -131,6 +132,7 @@ public class GameManager : MonoBehaviour
 
         instance.lives--;
         instance.UpdateLivesText();
+        if (instance.lives == 1) HaroCallout.Say("HARO! ARMOR CRITICAL!");
         if (instance.lives <= 0)
         {
             instance.EndRound(State.Lost, "MOBILE SUIT LOST\nThe Gundam was destroyed");

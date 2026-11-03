@@ -40,6 +40,7 @@ public class CharFlyover : MonoBehaviour
         PixelSkin skin = PixelSkin.Apply(go, SpriteLibrary.Skins.CharZaku);
         f.AddGhost(skin, 1, 0.35f);
         f.AddGhost(skin, 2, 0.15f);
+        HaroCallout.Say("HARO! RED COMET!");
     }
 
     void AddGhost(PixelSkin skin, int n, float alpha)
