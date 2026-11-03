@@ -11,9 +11,9 @@ public class AlienFleet : MonoBehaviour
     [SerializeField] private int rows = 3;
     [SerializeField] private float spacing = 2f;
     [SerializeField] private Vector2 gridOrigin = new Vector2(-12f, 10f); // top-left alien
-    [SerializeField] private float baseSpeed = .1f;    // units per physics tick with a full fleet
-    [Tooltip("Fractional speed increase per alien destroyed. 0.05 = 5% faster per kill, so the last alien of 30 moves ~2.45x base speed.")]
-    [SerializeField] private float speedUpPerKill = 0.05f;
+    [SerializeField] private float baseSpeed = .12f;   // units per physics tick with a full fleet (was .1)
+    [Tooltip("Fractional speed increase per alien destroyed. 0.04 = 4% faster per kill, so the last alien of 30 moves ~2.16x base speed.")]
+    [SerializeField] private float speedUpPerKill = 0.04f;   // was .05
     [SerializeField] private float leftBound = -16f;
     [SerializeField] private float rightBound = 16f;
     [SerializeField] private float downTime = .1f;     // seconds spent moving down at each turn
@@ -90,6 +90,14 @@ public class AlienFleet : MonoBehaviour
     {
         movingDown = false;
     }
+
+    /// <summary>
+    /// How much more often each surviving alien fires compared with a full fleet.
+    /// Square root of (starting / remaining): 1x with all 30, ~5.5x with one left.
+    /// Without this, total enemy fire falls to almost nothing as the fleet thins out.
+    /// </summary>
+    public float FireRateMultiplier =>
+        aliens.Count > 0 ? Mathf.Sqrt((float)startingCount / aliens.Count) : 1f;
 
     /// <summary>Called by an Alien when it is destroyed. Keeps the list and the UI in sync.</summary>
     public void RemoveAlien(GameObject alien)

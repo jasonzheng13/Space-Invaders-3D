@@ -6,7 +6,7 @@ public class Alien : MonoBehaviour
     public GameObject bulletPrefab;
     public AlienFleet fleet;   // set by AlienFleet when it spawns this alien
 
-    static float bulletSpawnRate = .002f;   // chance to fire per physics tick
+    static float bulletSpawnRate = .0025f;  // base chance to fire per physics tick (was .002)
     public static float shotCooldown = .1f;
 
     [Header("Dynamic")]
@@ -16,7 +16,9 @@ public class Alien : MonoBehaviour
     {
         if (!GameManager.IsPlaying) return;   // no shooting after the round ends
 
-        if (UnityEngine.Random.value < bulletSpawnRate && Time.time - lastShot > shotCooldown)
+        // Survivors fire more often as the fleet shrinks (see AlienFleet.FireRateMultiplier).
+        float fireChance = bulletSpawnRate * (fleet != null ? fleet.FireRateMultiplier : 1f);
+        if (UnityEngine.Random.value < fireChance && Time.time - lastShot > shotCooldown)
         {
             GameObject bullet = Instantiate<GameObject>(bulletPrefab);
             bullet.transform.position = transform.position;

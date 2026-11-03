@@ -5,13 +5,16 @@ public class Spaceship : MonoBehaviour
 {
     [Header("Inscribed")]
     public GameObject dartPrefab;
-    public float speed = 10f;   // units per second
-    public static float shotCooldown = .05f;
+    public float speed = 12f;   // units per second (was 10; compensates for faster alien bullets)
+    public static float shotCooldown = .35f;   // was .05, which allowed near-unlimited spam
     [Tooltip("Extra gap kept between the ship and the screen edge, in world units.")]
     [SerializeField] private float edgePadding = 0.25f;
+    [Tooltip("Seconds of invulnerability after a hit, so overlapping bullets cost only one life.")]
+    [SerializeField] private float invulnerableSeconds = 1f;
 
     [Header("Dynamic")]
     [SerializeField] private float lastShot = 0;
+    [SerializeField] private float lastHit = -999f;
 
     private Camera cam;
     private float halfWidth;   // half the ship's visual width, measured from its renderers
@@ -67,11 +70,14 @@ public class Spaceship : MonoBehaviour
 
     /// <summary>
     /// Only alien bullets (and aliens themselves) can collide with the ship, per the physics
-    /// layer matrix. Whatever hit us destroys the ship, so the round is lost.
+    /// layer matrix. The ship is not destroyed; it reports the hit and the GameManager
+    /// decides whether a life is lost or the round is over.
     /// </summary>
     void OnCollisionEnter(Collision coll)
     {
-        GameManager.ReportLoss("Your ship was destroyed");
+        if (Time.time - lastHit < invulnerableSeconds) return;   // within the grace period after the last hit
+        lastHit = Time.time;
+        GameManager.ReportShipHit();
     }
 
     /// <summary>

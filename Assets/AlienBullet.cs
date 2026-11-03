@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class AlienBullet : MonoBehaviour
 {
-    static float speed = .1f;        // units per physics tick
+    static float speed = .15f;       // units per physics tick (was .1)
     static float despawnY = -10f;    // just below the bottom of the orthographic camera
 
     void FixedUpdate()
@@ -19,6 +19,12 @@ public class AlienBullet : MonoBehaviour
     void OnCollisionEnter(Collision coll)
     {
         Destroy(gameObject);
-        Destroy(coll.gameObject);
+
+        // Darts are destroyed on contact. The Spaceship is not: it handles the hit itself
+        // (see Spaceship.OnCollisionEnter) so lives can be deducted instead.
+        if (!coll.gameObject.TryGetComponent<Spaceship>(out _))
+        {
+            Destroy(coll.gameObject);
+        }
     }
 }

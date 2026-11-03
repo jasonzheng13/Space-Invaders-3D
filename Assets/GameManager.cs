@@ -19,9 +19,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject endPanel;
     [Tooltip("Label inside the end panel that receives the result message.")]
     [SerializeField] private TextMeshProUGUI resultText;
+    [Tooltip("HUD label showing remaining lives.")]
+    [SerializeField] private TextMeshProUGUI livesText;
+    [SerializeField] private int startingLives = 3;
 
     [Header("Dynamic")]
     [SerializeField] private State state = State.Ready;
+    [SerializeField] private int lives;
 
     private static GameManager instance;
 
@@ -32,6 +36,8 @@ public class GameManager : MonoBehaviour
     {
         instance = this;
         state = State.Ready;
+        lives = startingLives;
+        UpdateLivesText();
         SetActiveSafe(startPanel, true);
         SetActiveSafe(endPanel, false);
     }
@@ -79,6 +85,24 @@ public class GameManager : MonoBehaviour
     public static void ReportLoss(string reason)
     {
         if (instance != null) instance.EndRound(State.Lost, "GAME OVER\n" + reason);
+    }
+
+    /// <summary>Called by the Spaceship when an alien bullet hits it. Costs one life; the last one ends the round.</summary>
+    public static void ReportShipHit()
+    {
+        if (instance == null || instance.state != State.Playing) return;
+
+        instance.lives--;
+        instance.UpdateLivesText();
+        if (instance.lives <= 0)
+        {
+            instance.EndRound(State.Lost, "Your ship was destroyed");
+        }
+    }
+
+    private void UpdateLivesText()
+    {
+        if (livesText != null) livesText.text = "Lives: " + lives;
     }
 
     private void EndRound(State result, string message)
