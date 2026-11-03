@@ -1,10 +1,15 @@
 using UnityEngine;
 
 /// <summary>
-/// Replaces the default sky with a black background and a slowly scrolling field of stars.
-/// Stars are small unlit quads placed far behind the gameplay plane (z = 0), so they can
-/// never collide with or hide the ship, aliens or bullets.
-/// Purely cosmetic: it keeps scrolling even when the round is over.
+/// The orbital background, back to front:
+///   1. scrolling stars (unlit quads at z = 20)
+///   2. Earth's night side with an orange sunrise rim and a pulsing sun glow (z = 19)
+///   3. the Side 7 colony cylinder drifting slowly (z = 18)
+///   4. distant battle flashes popping in the upper half (z = 17)
+///   5. dark debris tumbling past the screen edges only (z = 16)
+/// Everything sits behind the gameplay plane (z = 0) and uses negative sorting orders,
+/// so it can never cover or collide with the ship, aliens or bullets.
+/// Purely cosmetic: it keeps moving even when the round is over.
 /// </summary>
 public class Starfield : MonoBehaviour
 {
@@ -18,18 +23,34 @@ public class Starfield : MonoBehaviour
     [Tooltip("Optional. If empty, a URP Unlit material is created at runtime.")]
     [SerializeField] private Material starMaterial;
 
+    [Tooltip("Pixels per world unit for the Earth sprites. Lower = bigger planet.")]
+    [SerializeField] private float earthPixelsPerUnit = 24f;
+    [Tooltip("How far past the bottom-right corner of the view the planet's centre sits.")]
+    [SerializeField] private Vector2 earthOffset = new Vector2(2.5f, -3f);
+
+    private Camera cam;
+    private float lastAspect;
+    private Transform earth, sun, sunHalo, colony;
+    private SpriteRenderer sunRenderer, sunHaloRenderer;
+    private Vector3 colonyBase;
+    private float earthRadius;
+    private readonly Transform[] flashes = new Transform[4];
+    private readonly SpriteRenderer[] flashRenderers = new SpriteRenderer[4];
+    private readonly Transform[] debris = new Transform[4];
+    private readonly float[] debrisSpin = new float[4];
+
     private Transform[] stars;
     private float[] speeds;
     private float halfWidth, halfHeight, centreX, centreY;
 
     void Start()
     {
-        Camera cam = Camera.main;
+        cam = Camera.main;
         if (cam == null) return;
 
-        // Swap the skybox for a flat colour.
+        // Swap the skybox for a flat colour: the palette's "void", a very dark violet.
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = backgroundColor;
+        cam.backgroundColor = backgroundColor == Color.black ? (Color)PixelArt.Hex("#0D0B18") : backgroundColor;
 
         // Cover the visible area plus a margin so stars don't pop in at the edges.
         halfHeight = cam.orthographicSize + 1f;
@@ -64,11 +85,158 @@ public class Starfield : MonoBehaviour
             stars[i] = star.transform;
             speeds[i] = maxScrollSpeed * (size / sizeRange.y);   // bigger = "closer" = faster
         }
+
+        BuildBackdrop();
+        Anchor();
+    }
+
+    // ---------------- layers 2-5 ----------------
+
+    void BuildBackdrop()
+    {
+        // Earth: three stacked circles make a dark planet with an ember-to-orange rim.
+        earth = new GameObject("Earth").transform;
+        earth.SetParent(transform, false);
+        AddSprite(earth, PixelArt.Circle(620, PixelArt.Hex("#B5503F"), earthPixelsPerUnit), Vector3.zero, -50);
+        AddSprite(earth, PixelArt.Circle(596, PixelArt.Hex("#F4A340"), earthPixelsPerUnit), new Vector3(0, 0, -0.01f), -49);
+        AddSprite(earth, PixelArt.Circle(572, PixelArt.Hex("#1B2142"), earthPixelsPerUnit), new Vector3(0, 0, -0.02f), -48);
+        earthRadius = 310f / earthPixelsPerUnit;
+
+        // The sun just breaking over the limb, with a soft halo.
+        sunHalo = new GameObject("SunHalo").transform;
+        sunHalo.SetParent(transform, false);
+        sunHaloRenderer = AddSprite(sunHalo, PixelArt.Circle(160, PixelArt.Hex("#F6B35A"), earthPixelsPerUnit), Vector3.zero, -47);
+        sun = new GameObject("Sun").transform;
+        sun.SetParent(transform, false);
+        sunRenderer = AddSprite(sun, PixelArt.Circle(90, PixelArt.Hex("#FFE3A8"), earthPixelsPerUnit), Vector3.zero, -46);
+
+        // Side 7 colony cylinder, built from flat blocks (sizes from the Stages board, 40 px = 1 unit).
+        colony = new GameObject("Colony").transform;
+        colony.SetParent(transform, false);
+        Block(colony, "#6E6A8A", 0, 8, 240, 44, -45);
+        Block(colony, "#A9A6C0", 24, 14, 190, 6, -44);
+        Block(colony, "#2A2540", 24, 26, 190, 8, -44);
+        Block(colony, "#4A4458", 24, 40, 190, 4, -44);
+        Block(colony, "#8FB0FF", 36, -4, 54, 8, -44);    // the three long mirrors
+        Block(colony, "#8FB0FF", 100, -4, 54, 8, -44);
+        Block(colony, "#8FB0FF", 164, -4, 54, 8, -44);
+        Block(colony, "#D9463B", 236, 26, 6, 6, -43);    // navigation light
+
+        Sprite flash = PixelArt.Circle(18, PixelArt.Hex("#FFF1C9"), earthPixelsPerUnit);
+        Sprite chunk = PixelArt.Solid(PixelArt.Hex("#4A4458"));
+        for (int i = 0; i < 4; i++)
+        {
+            flashes[i] = new GameObject("Flash").transform;
+            flashes[i].SetParent(transform, false);
+            flashRenderers[i] = AddSprite(flashes[i], flash, Vector3.zero, -42);
+
+            debris[i] = new GameObject("Debris").transform;
+            debris[i].SetParent(transform, false);
+            AddSprite(debris[i], chunk, Vector3.zero, -41);
+            debris[i].localScale = Vector3.one * Random.Range(0.2f, 0.4f);
+            debrisSpin[i] = Random.Range(-90f, 90f);
+        }
+    }
+
+    /// <summary>Places everything relative to the current view; called again if the window changes shape.</summary>
+    void Anchor()
+    {
+        lastAspect = cam.aspect;
+        float viewH = cam.orthographicSize, viewW = viewH * cam.aspect;
+        halfWidth = viewW + 1f;   // stars wrap across the new width too
+        float right = centreX + viewW, bottom = centreY - viewH;
+
+        Vector3 c = new Vector3(right + earthOffset.x, bottom + earthOffset.y, 19f);
+        earth.position = c;
+
+        // The sun sits where the planet's limb meets the right edge of the screen.
+        float dx = Mathf.Min(right - c.x, earthRadius * 0.95f);
+        float y = c.y + Mathf.Sqrt(earthRadius * earthRadius - dx * dx);
+        sun.position = new Vector3(c.x + dx, y, 18.95f);
+        sunHalo.position = new Vector3(c.x + dx, y, 18.97f);
+
+        colonyBase = new Vector3(centreX - viewW * 0.55f, centreY + viewH * 0.45f, 18f);
+
+        for (int i = 0; i < 4; i++)
+        {
+            ResetFlash(i);
+            ResetDebris(i, Random.Range(bottom, centreY + viewH));
+        }
+    }
+
+    void ResetFlash(int i)
+    {
+        float viewH = cam.orthographicSize, viewW = viewH * cam.aspect;
+        flashes[i].position = new Vector3(centreX + Random.Range(-viewW, viewW), centreY + Random.Range(0f, viewH), 17f);
+    }
+
+    void ResetDebris(int i, float y)
+    {
+        // Only in the outer 15% of the view on either side, so it never crosses the action.
+        float viewW = cam.orthographicSize * cam.aspect;
+        float band = Random.Range(0.85f, 1f) * viewW * (i % 2 == 0 ? -1f : 1f);
+        debris[i].position = new Vector3(centreX + band, y, 16f);
+    }
+
+    void UpdateBackdrop()
+    {
+        if (cam == null) return;
+        if (!Mathf.Approximately(cam.aspect, lastAspect)) Anchor();
+        float t = Time.time;
+
+        // Sun glow pulses between 45% and 100% opacity every 1.3 s.
+        float pulse = Mathf.Lerp(0.45f, 1f, 0.5f + 0.5f * Mathf.Sin(t * Mathf.PI * 2f / 1.3f));
+        sunRenderer.color = new Color(1f, 1f, 1f, pulse);
+        sunHaloRenderer.color = new Color(1f, 1f, 1f, pulse * 0.35f);
+
+        // Colony drifts one unit left and right over 14 s.
+        colony.position = colonyBase + new Vector3(Mathf.Sin(t * Mathf.PI * 2f / 14f), 0f, 0f);
+
+        // Each flash pops and fades during the last part of its own 2.6 s cycle.
+        for (int i = 0; i < 4; i++)
+        {
+            float cycle = (t / 2.6f + i * 0.25f) % 1f;
+            float k = Mathf.InverseLerp(0.7f, 0.9f, cycle);
+            bool on = cycle >= 0.7f && cycle < 0.9f;
+            flashRenderers[i].enabled = on;
+            flashes[i].localScale = Vector3.one * Mathf.Lerp(0.4f, 1.6f, k);
+            flashRenderers[i].color = new Color(1f, 1f, 1f, 1f - k);
+            if (cycle < 0.05f && !on) ResetFlash(i);   // new spot for the next pop
+        }
+
+        // Debris tumbles slowly downward and wraps to the top.
+        for (int i = 0; i < 4; i++)
+        {
+            debris[i].position += new Vector3(0f, -1.2f * Time.deltaTime, 0f);
+            debris[i].Rotate(0f, 0f, debrisSpin[i] * Time.deltaTime);
+            if (debris[i].position.y < centreY - halfHeight) ResetDebris(i, centreY + halfHeight);
+        }
+    }
+
+    static SpriteRenderer AddSprite(Transform parent, Sprite sprite, Vector3 localPos, int order)
+    {
+        var go = new GameObject("Sprite");
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = localPos;
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = sprite;
+        sr.sortingOrder = order;
+        return sr;
+    }
+
+    /// <summary>A coloured rectangle given in Stages-board pixels (40 px = 1 unit), top-left origin.</summary>
+    static void Block(Transform parent, string hex, float x, float y, float w, float h, int order)
+    {
+        const float pxPerUnit = 40f;
+        var sr = AddSprite(parent, PixelArt.Solid(PixelArt.Hex(hex)),
+            new Vector3((x + w / 2f - 120f) / pxPerUnit, (30f - (y + h / 2f)) / pxPerUnit, 0f), order);
+        sr.transform.localScale = new Vector3(w / pxPerUnit, h / pxPerUnit, 1f);
     }
 
     void Update()
     {
         if (stars == null) return;
+        UpdateBackdrop();
 
         for (int i = 0; i < stars.Length; i++)
         {
